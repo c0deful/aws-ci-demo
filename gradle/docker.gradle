@@ -1,0 +1,31 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:3.0.11'
+    }
+}
+
+// use fully qualified class name
+apply plugin: com.bmuschko.gradle.docker.DockerRemoteApiPlugin
+
+// import task classes
+import com.bmuschko.gradle.docker.tasks.image.*
+
+// use task classes
+task createDockerfile(type: Dockerfile) {
+    destFile = project.file('build/Dockerfile')
+    from 'openjdk:8'
+    maintainer 'Dominik Plewa "plewad@gmail.com"'
+    copyFile "libs/${jar.archiveName}", '.'
+    defaultCommand 'java', '-jar', jar.archiveName
+    exposePort 8080
+}
+
+task buildImage(type: DockerBuildImage) {
+    dependsOn build
+    dependsOn createDockerfile
+    inputDir = createDockerfile.destFile.parentFile
+    tag = 'dplewa/aws-ci-demo:latest'
+}
